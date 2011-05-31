@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <title></title>
+<!--     <link href="style.css" media="screen" rel="Stylesheet" type="text/css" />         -->
+    <style type="text/css" media="screen">
+      input {
+        width: 200px;
+      }
+      label {
+        width: 200px;
+        float:left;
+      }
+      
+    </style>
+  </head>
+  <body>
+    <div class='main'>
+      <h1>Bitcoin estimator</h1>
+      <label for="dollars_per_kwh">Dollars per kwh</label><input type="text" name="dollars_per_kwh" value="0.1052" id="dollars_per_kwh"><br>
+      <label for="dollars_per_joule">Dollars per joule</label><input type="text" name="dollars_per_joule" value="" id="dollars_per_joule"><br>
+      <label for="total_hashes_per_second">Total Hashes Per Second</label><input type="text" name="total_hashes_per_second" value="3,265,400,000,000" id="total_hashes_per_second"><br>
+      <label for="hashes_per_block">Hashes per block</label><input type="text" name="hashes_per_block" value="" id="hashes_per_block"><br>
+      
+      <label for="average_hashes_per_joule">Average Hashes Per Joule</label><input type="text" name="average_hashes_per_joule" value="1,000,000" id="average_hashes_per_joule"><br>
+      <label for="cost_per_hash">Cost Per Hash</label><input type="text" name="cost_per_hash" value="" id="cost_per_hash"><br>
+      <label for="bitcoins_per_block">Bitcoins Per Block</label><input type="text" name="bitcoins_per_block" value="50" id="bitcoins_per_block"><br>
+      <label for="dollars_per_bitcoin">Dollars Per Bitcoin</label><input type="text" name="dollars_per_bitcoin" value="9.289" id="dollars_per_bitcoin"><br>
+      <label for="revenue_per_hash">Revenue Per Hash</label><input type="text" name="revenue_per_hash" value="" id="revenue_per_hash"><br>
+      <label for="mining_profit_per_hash">Mining profit per hash</label><input type="text" name="mining_profit_per_hash" value="" id="mining_profit_per_hash"><br>
+      
+      
+      
+    <div>
+      <h3>Mining rig calculations</h3>
+      
+      <label for="hashes_per_second">Hashes Per Second</label><input type="text" name="hashes_per_second" value="708,000,000" id="hashes_per_second"><br>
+      <label for="hashes_per_joule">Hashes Per Joule</label><input type="text" name="hashes_per_joule" value="2,000,000" id="hashes_per_joule"><br>
+      
+      <div>
+        <label for="profit_per_second">Profit Per Second</label><input type="text" name="profit_per_second" value="" id="profit_per_second"><br>
+        <label for="profit_per_day">Profit Per Day</label><input type="text" name="profit_per_day" value="" id="profit_per_day"><br>
+        <label for="profit_per_month">Profit Per Month</label><input type="text" name="profit_per_month" value="" id="profit_per_month"><br>
+      </div>
+      
+      
+    </div>
+
+      
+      
+    </div>
+    <script src="jsparse.js" type="text/javascript" charset="utf-8"></script>
+    <script src="ConstraintNetwork.js" type="text/javascript" charset="utf-8"></script>
+    <script src="jquery.js" type="text/javascript" charset="utf-8"></script>
+    <script type="text/javascript">
+      
+      var network = ConstraintNetwork.fromEquations(
+        "dollars_per_kwh / 3,600,000 = dollars_per_joule",
+        "dollars_per_joule / average_hashes_per_joule = cost_per_hash",
+        "total_hashes_per_second * 60 * 10 = hashes_per_block",
+        "bitcoins_per_block * dollars_per_bitcoin / hashes_per_block = revenue_per_hash",
+        "revenue_per_hash - cost_per_hash = mining_profit_per_hash",
+        "dollars_per_joule / hashes_per_joule = my_cost_per_hash",
+        "revenue_per_hash - my_cost_per_hash = my_profit_per_hash",
+        "hashes_per_second * my_profit_per_hash = profit_per_second",
+        "profit_per_second * 60 * 60 * 24 = profit_per_day",
+        "profit_per_day * 30 = profit_per_month"
+      );
+
+      $(function() {
+        $('input').change(calculate).keyup(calculate);
+        calculate();
+      });
+      
+      function calculate() {
+        var mappings = {};
+        $('input').each(function() {
+          var val = parseFloat(this.value.replace(/,/g, ""), 10);
+          if (!isNaN(val)) {
+            mappings[this.id] = val;
+          }
+        });
+        mappings = network.solve(mappings);
+        console.log(mappings);
+        for (var key in mappings) {
+          $("#" + key).attr("placeholder", mappings[key])
+        }
+      }
+//       console.log(Expr(ps("1+2*3-4")))
+      
+    </script>
+  </body>
+</html>
