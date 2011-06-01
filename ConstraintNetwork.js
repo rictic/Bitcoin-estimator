@@ -15,14 +15,14 @@ var ConstraintNetwork = (function() {
     var i = 0;
     while (constraint !== null) {
       var newMappings = constraint.transform(mappings);
-      console.log(newMappings);
+//       console.log(newMappings);
       for (var key in newMappings) {
         if (key in mappings) {
           if (mappings[key] !== newMappings[key]) {
             console.warn("computed " + key + ":" + newMappings[key] + " but previously held it to be " + mappings[key]);
           }
         } else {
-          console.log("discovered mapping " + key + ":" + newMappings[key]);
+          // console.log("discovered mapping " + key + ":" + newMappings[key]);
           mappings[key] = newMappings[key];
         }
       }
@@ -32,17 +32,17 @@ var ConstraintNetwork = (function() {
     
     return mappings;
   }
-  ConstraintNetwork.fromEquations = function(var_args) {
+  ConstraintNetwork.fromEquations = function(equations) {
     var constraints = [];
-    forEach(arguments, function(eq) {
+    forEach(equations, function(eq) {
       constraints.push(parseEquation(eq));
     });
     return new ConstraintNetwork(constraints);
   }
   
   function getUsableConstraint(mappings, constraints) {
-    console.log(mappings);
-    console.log(constraints);
+//     console.log(mappings);
+    // console.log(constraints);
     for (var i = 0; i < constraints.length; i++) {
       var constraint = constraints[i];
       var outputNeeded = false;
@@ -58,10 +58,10 @@ var ConstraintNetwork = (function() {
         }
       });
       if (inputAvailable && outputNeeded) {
-        console.log("choosing constraint " + constraint);
+        // console.log("choosing constraint " + constraint);
         return constraint;
       } else {
-        console.log("skipping constraint " + constraint + " inputAvailable: " + inputAvailable + " outputNeeded: " + outputNeeded);
+        // console.log("skipping constraint " + constraint + " inputAvailable: " + inputAvailable + " outputNeeded: " + outputNeeded);
       }
     }
     return null;
@@ -72,20 +72,20 @@ var ConstraintNetwork = (function() {
     var eqsplit = eq.split("=");        
     var expression = eqsplit[0];
     var output = eqsplit[1];
-    var inputs = expression.match(/[a-zA-Z_]+/g);
+    var inputs = expression.match(/[a-zA-Z_]+/g) || [];
     
     var transformation = function(mappings) {
       var resultMapping = {};
-      console.log(parseTree);
+      // console.log(parseTree);
       resultMapping[output] = parseTree.getValue(mappings);
       return resultMapping;
     }
     
     var parseTree;
     
-    console.log(expression);
+    // console.log(expression);
     parseTree = doParse(expression);
-    console.log(parseTree);
+    // console.log(parseTree);
     
     return new Constraint(inputs, [output], transformation, equation);
   }
@@ -143,7 +143,7 @@ var ConstraintNetwork = (function() {
     this.evaluator = evaluator;
   }
   ExpressionNode.prototype.getValue = function(mappings) {
-    console.log("getting value: ", this.lhs, this.rhs, this.lhs.getValue(mappings), this.rhs.getValue(mappings));
+//     console.log("getting value: ", this.lhs, this.rhs, this.lhs.getValue(mappings), this.rhs.getValue(mappings));
     return this.evaluator(this.lhs.getValue(mappings), this.rhs.getValue(mappings));
   }
   function LookupNode(name) {
