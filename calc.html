@@ -11,13 +11,47 @@
         width: 300px;
         float:left;
       }
+      .equationDisplay {
+        float: right;
+        width: 400px;
+      }
+      .equationDisplay h3 {
+        font-size: 105%;
+      }
+      .equationDisplay ul {
+        list-style-type: none;
+      }
+      .equationDisplay li {
+        font-size: 80%;
+      }
+      table {
+        display: none; 
+      }
       .notes {
         display: none;
+      }
+      .literal {
+        color: #0000C8;
+      }
+      .variable {
+        color: #116;
+      }
+      .operator {
+        color: #D33;
+      }
+      .highlighted {
+        font-weight: bold;
       }
     </style>
   </head>
   <body>
     <div class='main'>
+      <div class='equationDisplay'>
+        <h3>Equations</h3>
+        <ul>
+          
+        </ul>
+      </div>
       <h1>Bitcoin estimator</h1>
       
       <h3>Basics</h3>
@@ -63,28 +97,28 @@
     <script type="text/javascript">
       
       var equations = [
-        "60 * 60 * 24 = seconds_per_day",
-        "60 * 10 = seconds_per_block",
-        "dollars_per_kwh / 3,600,000 = dollars_per_joule",
-        "dollars_per_joule / average_hashes_per_joule = cost_per_hash",
-        "total_hashes_per_second * seconds_per_block = hashes_per_block",
-        "total_hashes_per_second * seconds_per_day = hashes_per_day",
-        "total_transaction_fees_per_day / seconds_per_day = transaction_fees_per_second",
-        "transaction_fees_per_second / total_hashes_per_second = transaction_fees_per_hash",
-        "bitcoins_per_block / hashes_per_block = bitcoins_per_hash",
-        "bitcoins_per_hash * dollars_per_bitcoin + transaction_fees_per_hash = revenue_per_hash",
-        "revenue_per_hash - cost_per_hash = mining_profit_per_hash",
-        "dollars_per_joule / hashes_per_joule = my_cost_per_hash",
-        "revenue_per_hash - my_cost_per_hash = my_profit_per_hash",
-        "hashes_per_second * my_profit_per_hash = profit_per_second",
-        "profit_per_second * seconds_per_day = profit_per_day",
-        "profit_per_day * 30 = profit_per_month",
-        "bitcoins_per_hash * hashes_per_second * seconds_per_day = bitcoins_per_day",
-        "cost_per_hash * hashes_per_day = electricity_cost_of_network",
-        "bitcoins_transacted_per_day * dollars_per_bitcoin = dollars_worth_transacted_per_day",
-        "electricity_cost_of_network / dollars_worth_transacted_per_day = electricity_cost_as_percentage_of_transactions",
-        "total_transaction_fees_per_day / bitcoins_transacted_per_day = average_transaction_fee",
-        "electricity_cost_of_network / bitcoins_transacted_per_day = expected_transaction_fee"
+        "seconds_per_day = 60 * 60 * 24",
+        "seconds_per_block = 60 * 10",
+        "dollars_per_joule = dollars_per_kwh / 3,600,000",
+        "cost_per_hash = dollars_per_joule / average_hashes_per_joule",
+        "hashes_per_block = total_hashes_per_second * seconds_per_block",
+        "hashes_per_day = total_hashes_per_second * seconds_per_day",
+        "transaction_fees_per_second = total_transaction_fees_per_day / seconds_per_day",
+        "transaction_fees_per_hash = transaction_fees_per_second / total_hashes_per_second",
+        "bitcoins_per_hash = bitcoins_per_block / hashes_per_block",
+        "revenue_per_hash = bitcoins_per_hash * dollars_per_bitcoin + transaction_fees_per_hash",
+        "mining_profit_per_hash = revenue_per_hash - cost_per_hash",
+        "my_cost_per_hash = dollars_per_joule / hashes_per_joule",
+        "my_profit_per_hash = revenue_per_hash - my_cost_per_hash",
+        "profit_per_second = hashes_per_second * my_profit_per_hash",
+        "profit_per_day = profit_per_second * seconds_per_day",
+        "profit_per_month = profit_per_day * 30",
+        "bitcoins_per_day = bitcoins_per_hash * hashes_per_second * seconds_per_day",
+        "electricity_cost_of_network = cost_per_hash * hashes_per_day",
+        "dollars_worth_transacted_per_day = bitcoins_transacted_per_day * dollars_per_bitcoin",
+        "electricity_cost_as_percentage_of_transactions = electricity_cost_of_network / dollars_worth_transacted_per_day",
+        "average_transaction_fee = total_transaction_fees_per_day / bitcoins_transacted_per_day",
+        "expected_transaction_fee = electricity_cost_of_network / bitcoins_transacted_per_day"
       ]
       
       var network;
@@ -98,8 +132,13 @@
 //           equations.push("")
 //           equations.push("rowName + "profitPerSecond")
         })
+        for (var i = 0; i < equations.length; i++) {
+          $("<li>").append(equationToHtml(equations[i])).appendTo(".equationDisplay ul");
+        }
         network = ConstraintNetwork.fromEquations(equations);
-        $('input').change(calculate).keyup(calculate);
+        $('input').change(calculate).keyup(calculate)
+            .focus(function(){highlight(this.id)})
+            .blur(function(){removeHighlight(this.id)});
         calculate();
       });
       
@@ -119,6 +158,42 @@
       }
 //       console.log(Expr(ps("1+2*3-4")))
       
+      function equationToHtml(equation) {
+        var container = $("<span>").addClass('equation');
+        var parseTree = parseEquation(equation);
+        container.append(expressionToHtml(parseTree.output).addClass('outputNode').removeClass('inputNode'));
+        container.append(" = ");
+        container.append(expressionToHtml(parseTree.expression));
+        return container;
+      }
+      
+      function expressionToHtml(expression) {
+        if (expression.name) {
+          return $("<span>")
+            .addClass('variable inputNode variable' + expression.name)
+            .text(expression.name)
+            .mouseover(function() { highlight(expression.name); })
+            .mouseout(function() { removeHighlight(expression.name); });
+        }
+        if (expression.value) {
+          return $("<span>").addClass("literal").text(expression.value);
+        }
+        return $("<span>")
+            .addClass('operation')
+            .append(expressionToHtml(expression.lhs))
+            .append(" ")
+            .append($("<span>").addClass('operator').text(expression.operator))
+            .append(" ")
+            .append(expressionToHtml(expression.rhs));
+      }
+      function highlight(variableName) {
+        $(".variable" + variableName).addClass("highlighted");
+        $("#" + variableName).addClass("highlighted");
+      }
+      function removeHighlight(variableName) {
+        $(".variable" + variableName).removeClass("highlighted");
+        $("#" + variableName).removeClass("highlighted");
+      }
     </script>
     
     <table>
