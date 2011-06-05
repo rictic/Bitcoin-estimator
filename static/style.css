@@ -1,0 +1,48 @@
+input {
+  width: 200px;
+}
+label {
+  width: 300px;
+  float:left;
+}
+.equationDisplay {
+  float: right;
+  width: 400px;
+}
+.equationDisplay h3 {
+  font-size: 105%;
+}
+.equationDisplay ul {
+  list-style-type: none;
+}
+.equationDisplay li {
+  font-size: 80%;
+}
+table {
+  display: none; 
+}
+.notes {
+  display: none;
+}
+.literal {
+  color: #0000C8;
+}
+.variable {
+  color: #116;
+}
+.operator {
+  color: #D33;
+}
+.highlighted {
+  background-color: #dd9;
+}
+.invisible {
+  display: none;
+}
+.clear {
+  clear: left;
+}
+h3 {
+  padding-top: 20px;
+  clear: left;
+}

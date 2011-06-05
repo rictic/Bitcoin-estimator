@@ -1,0 +1,12 @@
+application: btcalc
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /getdata
+  script: get_data.py
+- url: /(.*)
+  static_files: static/\1
+  upload: static/.*
+
