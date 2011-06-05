@@ -7,7 +7,7 @@ label {
 }
 .equationDisplay {
   float: right;
-  width: 400px;
+  width: 40%;
 }
 .equationDisplay h3 {
   font-size: 105%;
@@ -45,4 +45,10 @@ table {
 h3 {
   padding-top: 20px;
   clear: left;
+}
+.prettyField {
+  margin-bottom: 10px;
+}
+.prettyField label {
+  font-size: 90%;
 }

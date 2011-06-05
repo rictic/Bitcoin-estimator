@@ -40,6 +40,7 @@
       
       var equations = [
         "seconds_per_day = 60 * 60 * 24",
+        "seconds_per_month = seconds_per_day * 30",
         "dollars_per_joule = dollars_per_kwh / 3,600,000",
         "cost_per_hash = dollars_per_joule / average_hashes_per_joule",
         "total_hashes_per_second = hashes_per_block / seconds_per_block",
@@ -54,6 +55,7 @@
         "profit_per_second = hashes_per_second * my_profit_per_hash",
         "profit_per_day = profit_per_second * seconds_per_day",
         "profit_per_month = profit_per_day * 30",
+        "cost_per_month = my_cost_per_hash * hashes_per_second * seconds_per_month",
         "bitcoins_per_day = bitcoins_per_hash * hashes_per_second * seconds_per_day",
         "electricity_cost_of_network = cost_per_hash * hashes_per_day",
         "dollars_worth_transacted_per_day = bitcoins_transacted_per_day * dollars_per_bitcoin",
@@ -108,7 +110,7 @@
         number_of_blocks: 128706,
         transactions_per_block: 38.814,
         dollars_per_bitcoin: 17,
-        bitcoins_transacted_per_day: 263790.16,
+        bitcoins_transacted_per_day: 479392.60,
         average_hashes_per_joule: 1000 * 1000,
         total_transaction_fees_per_day: 20,
         bitcoins_per_block: 50,
@@ -258,7 +260,7 @@
       }
             
       function inputDisplay(name, description, numberStyle) {
-        var label = $("<label>", {for: name, text: description})
+        var label = $("<label>", {for: name, text: description + ":"})
           .click(function(){
             displayValue.hide();
             inputField.show().focus()});
@@ -281,7 +283,7 @@
         $(window).bind("updatedValues", function(ev, mappings) {
           if (mappings[name]) {
             updateDisplayField(mappings[name]);
-            inputField.val(mappings[name]);
+            inputField.attr("placeholder", mappings[name]);
           }
         })
         return $("<div>", {"class": "clear prettyField"}).append(label, inputField, displayValue);

@@ -47,5 +47,6 @@ for datapoint in datapoints:
 
 
 print 'Content-Type: text/plain'
+print 'Cache-Control: max-age=60' #doesn't work?
 print ''
 print encodeJson(result)
