@@ -31,6 +31,16 @@
 
       <div class='attack'></div>
         
+      
+      <h4>Preview:</h4>
+      <div class='newFieldPreview'>
+        
+      </div>
+      <fieldset class='newField clear'>
+        <input type="text" name="description" placeholder="Description" value="" id="description">
+        <input type="text" name="variable_name" placeholder="Variable Name" value="" id="variable_name">
+        <input type="text" name="default_value" placeholder="Default Value" value="" id="default_value">
+      </fieldset>
     </div>
     
     <script src="jsparse.js" type="text/javascript" charset="utf-8"></script>
@@ -40,6 +50,7 @@
       
       var equations = [
         "seconds_per_day = 60 * 60 * 24",
+        "seconds_per_hour = 60 * 60",
         "seconds_per_month = seconds_per_day * 30",
         "dollars_per_joule = dollars_per_kwh / 3,600,000",
         "cost_per_hash = dollars_per_joule / average_hashes_per_joule",
@@ -55,6 +66,7 @@
         "profit_per_second = hashes_per_second * my_profit_per_hash",
         "profit_per_day = profit_per_second * seconds_per_day",
         "profit_per_month = profit_per_day * 30",
+        "personal_cost_per_month = my_cost_per_hash * hashes_per_second * seconds_per_month",
         "cost_per_month = my_cost_per_hash * hashes_per_second * seconds_per_month",
         "bitcoins_per_day = bitcoins_per_hash * hashes_per_second * seconds_per_day",
         "electricity_cost_of_network = cost_per_hash * hashes_per_day",
@@ -71,30 +83,49 @@
         "transactions_per_day = transactions_per_block * blocks_per_day"
       ]
       
+      var metricPrefix = function(divisor) {
+        return function(v) {
+          return v / divisor;
+        }
+      }
+      var formatters = {
+        metric: {
+          K: metricPrefix(1000),
+          M: metricPrefix(1000 * 1000),
+          G: metricPrefix(1000 * 1000 * 1000),
+          T: metricPrefix(1000 * 1000 * 1000 * 1000)
+        },
+        percent: function(num) {
+          num *= 100;
+          return num;
+        }
+      };
+      
       var displays = {"basics": [
-        inputDisplay("total_hashes_per_second", "Hashing Power of the Network", new NumberStyle(true, true, "", " G hashes per second", function(v) {return v / (1000 * 1000 * 1000)})),
+        inputDisplay("hashes_per_block", "Expected Hashes Per Block", new NumberStyle(true, true, "", " T hashes", formatters.metric.T)),
         inputDisplay("dollars_per_kwh", "Average electricity cost", new NumberStyle(false, true, "$", " per kwh")),
-        inputDisplay("average_hashes_per_joule", "Average hashing efficiency", new NumberStyle(false, true, "", " M hashes per joule", function(v) {return v / (1000.0 * 1000)})),
+        inputDisplay("average_hashes_per_joule", "Average hashing efficiency", new NumberStyle(false, true, "", " M hashes per joule", formatters.metric.M)),
         inputDisplay("bitcoins_per_block", "Bitcoins Per Block", new NumberStyle(true, true, "", " BTC")),
         inputDisplay("dollars_per_bitcoin", "Dollars Per Bitcoin", new NumberStyle(false, true, "$", "")),
         inputDisplay("transactions_per_day", "Transactions Per Day", new NumberStyle(true, true, "", "")),
         inputDisplay("bitcoins_transacted_per_day", "Bitcoins Transacted Per Day", new NumberStyle(true, true, "", " BTC")),
         inputDisplay("total_transaction_fees_per_day", "Average transaction fees per day", new NumberStyle(true, true, "", " BTC")),
         inputDisplay("electricity_cost_of_network", "Daily Electricity Cost of Network", new NumberStyle(true, true, "$", "")),
-        inputDisplay("electricity_cost_as_percentage_of_transactions", "Ratio of Electricity Cost to Transaction Value", new NumberStyle(false, true, "", " %", renderPercent)),
-        inputDisplay("average_transaction_fee", "Observed Average Transaction Fee", new NumberStyle(false, true, "", " %", renderPercent)),
-        inputDisplay("expected_transaction_fee", "Expected Transaction Fee as Percent After Generation of New Coins is Finished", new NumberStyle(false, true, "", " %", renderPercent))
+        inputDisplay("electricity_cost_as_percentage_of_transactions", "Ratio of Electricity Cost to Transaction Value", new NumberStyle(3, true, "", " %", formatters.percent)),
+        inputDisplay("average_transaction_fee", "Observed Average Transaction Fee", new NumberStyle(3, true, "", " %", formatters.percent)),
+        inputDisplay("expected_transaction_fee", "Expected Transaction Fee If No New Coins Were Generated", new NumberStyle(2, true, "", " %", formatters.percent))
       ], "rigInfo": [
-        inputDisplay("hashes_per_second", "Hashes Per Second", new NumberStyle(true, true, "", " M hashes per second", function(v) {return v / (1000 * 1000)})),
-        inputDisplay("hashes_per_joule", "Hashes Per Joule", new NumberStyle(false, true, "", " M hashes per joule", function(v) {return v / (1000 * 1000)})),
-        inputDisplay("profit_per_day", "Profit Per Day", new NumberStyle(true, true, "$", "")),
-        inputDisplay("profit_per_month", "Profit Per Month", new NumberStyle(true, true, "$", "")),
-        inputDisplay("bitcoins_per_day", "Bitcoins Per Day", new NumberStyle(true, true, "", " BTC")),
+        inputDisplay("hashes_per_second", "Hashes Per Second", new NumberStyle(true, true, "", " M hashes per second", formatters.metric.M)),
+        inputDisplay("hashes_per_joule", "Hashes Per Joule", new NumberStyle(false, true, "", " M hashes per joule", formatters.metric.M)),
+        inputDisplay("profit_per_day", "Profit Per Day", new NumberStyle(true, true, "$")),
+        inputDisplay("profit_per_month", "Profit Per Month", new NumberStyle(true, true, "$")),
+        inputDisplay("bitcoins_per_day", "Bitcoins Per Day", new NumberStyle(2, true, "", " BTC")),
+        inputDisplay("personal_cost_per_month", "Electricity Cost Per Month", new NumberStyle(true, true, "$"))
       ], "health": [
         inputDisplay("cost_of_mining_rig", "$ Cost of Mining Rig", new NumberStyle(true, true, "$", "")),
-        inputDisplay("hashes_per_second_per_rig", "Hashes Per Second Per Rig", new NumberStyle(true, true, "", " M hashes per second", function(v) {return v / (1000 * 1000)})),
+        inputDisplay("hashes_per_second_per_rig", "Hashes Per Second Per Rig", new NumberStyle(true, true, "", " M hashes per second", formatters.metric.M)),
         inputDisplay("cost_of_a_botnet_zombie", "$ Cost of a Botnet Zombie", new NumberStyle(true, true, "$", "")),
-        inputDisplay("hashes_per_second_per_botnet_zombie", "Hashes per second per botnet zombie", new NumberStyle(false, true, "", " M hashes per second", function(v) {return v / (1000 * 1000)}))
+        inputDisplay("hashes_per_second_per_botnet_zombie", "Hashes per second per botnet zombie", new NumberStyle(false, true, "", " M hashes per second", formatters.metric.M))
       ], "attack": [
         inputDisplay("rigs_needed", "Rigs needed for 51% attack", new NumberStyle(true, true, "", " rigs")),
         inputDisplay("zombies_needed", "Zombies needed for 51% attack", new NumberStyle(true, true, "", " zombies")),
@@ -120,7 +151,8 @@
         cost_of_mining_rig: 725,
         hashes_per_second_per_rig: 900 * 1000 * 1000,
         cost_of_a_botnet_zombie: 5,
-        hashes_per_second_per_botnet_zombie: 100 * 1000
+        hashes_per_second_per_botnet_zombie: 100 * 1000,
+        watts_used: 160
       };
       $(function() {
         var i = 0;
@@ -138,7 +170,8 @@
             area.append(d[i]);
           }
         }
-        
+        $(".newField input").change(renderPreview).keyup(renderPreview);
+        $("")
         for (var i = 0; i < equations.length; i++) {
           $("<li>").append(equationToHtml(equations[i])).appendTo(".equationDisplay ul");
         }
@@ -150,11 +183,25 @@
           }
           calculate();
         })
-        $('input').change(calculate).keyup(calculate)
-            .focus(function(){highlight(this.id)})
-            .blur(function(){removeHighlight(this.id)});
         calculate();
       });
+      
+      var previousName;
+      var previousValue;
+      function renderPreview() {
+        if (previousName && previousValue) {
+          delete knownValues[previousName]
+        }
+        var description = $("#description").val();
+        var variableName = $("#variable_name").val();
+        var defaultValue = $("#default_value").val();
+        if (defaultValue) {
+          knownValues[previousName] = parseValue(defaultValue);
+        }
+        var display = inputDisplay(variableName, description, new NumberStyle(true, false, "", ""));
+        $(".newFieldPreview").empty().append(display);
+        calculate();
+      }
       
       function calculate() {
         var mappings = {};
@@ -162,7 +209,7 @@
           mappings[key] = knownValues[key];
         }
         $('input').each(function() {
-          var val = parseFloat(this.value.replace(/,/g, ""), 10);
+          var val = parseValue(this.value);
           if (!isNaN(val)) {
             mappings[this.id] = val;
           }
@@ -175,6 +222,10 @@
         $(window).trigger("updatedValues", mappings);
       }
 //       console.log(Expr(ps("1+2*3-4")))
+      
+      function parseValue(val) {
+        return parseFloat(val.replace(/,/g, ""), 10);
+      }
       
       function equationToHtml(equation) {
         var container = $("<span>").addClass('equation');
@@ -205,10 +256,12 @@
             .append(expressionToHtml(expression.rhs));
       }
       function highlight(variableName) {
+        $(".styledVariable" + variableName).addClass("highlighted");
         $(".variable" + variableName).addClass("highlighted");
         $("#" + variableName).addClass("highlighted");
       }
       function removeHighlight(variableName) {
+        $(".styledVariable" + variableName).removeClass("highlighted");
         $(".variable" + variableName).removeClass("highlighted");
         $("#" + variableName).removeClass("highlighted");
       }
@@ -222,8 +275,16 @@
       NumberStyle.prototype.renderNumber = function(num) {
         var self = this;
         num = this.preprocessor(num);
-        if (this.round) {
+        if (this.round === true) {
+          this.round = 0;
+          
           num = Math.round(num);
+        } 
+        if (this.round !== false) {
+          var factor = Math.pow(10, this.round);
+          num *= factor;
+          num = Math.round(num);
+          num /= factor;
         }
         num = num + "";
         var parts = num.split(".");
@@ -252,19 +313,13 @@
         }
       }
       
-      function renderPercent(num) {
-        num *= 10000;
-        num = Math.round(num);
-        num /= 100.0;
-        return num;
-      }
             
       function inputDisplay(name, description, numberStyle) {
         var label = $("<label>", {for: name, text: description + ":"})
           .click(function(){
             displayValue.hide();
             inputField.show().focus()});
-        var inputField = $("<input>", {id: name, type: "text", "class": "invisible"})
+        var inputField = $("<input>", {id: name, type: "text", "class": "prettyInput invisible"})
           .focus(function(){highlight(this.id)})
           .blur(function() {
             removeHighlight(this.id);
@@ -272,11 +327,11 @@
             inputField.hide();
           })
           .change(calculate).keyup(calculate);
-        var displayValue = $("<span>", {}).click(
+        var displayValue = $("<span>", {"class": "styledVariable" + name}).click(
           function() {
             displayValue.hide();
             inputField.show().focus();
-          });
+          }).append("&nbsp;");
         function updateDisplayField(val) {
           displayValue.text(numberStyle.renderNumber(val));;
         }

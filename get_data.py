@@ -27,16 +27,19 @@ class DataPoint(object):
     return value
   
   def fetch(self):
-    result = fetch(self.url)
+    try:
+      result = fetch(self.url)
+    except Exception, e:
+      raise Exception("unable to fetch %s" % self.url, e)
     body = result.content
     return self.parser(body)
 
 datapoints = [
   DataPoint("http://blockexplorer.com/q/getblockcount", "number_of_blocks", parseDouble),
-  DataPoint("http://blockexplorer.com/q/hashestowin", "hashes_per_block", parseDouble, 60*60*3),
-  DataPoint("http://blockexplorer.com/q/avgtxnumber", "transactions_per_block", parseDouble, 60*60*3),
-  DataPoint("http://blockexplorer.com/q/interval", "seconds_per_block", parseDouble, 60*60*3),
-  DataPoint("http://bitcoincharts.com/t/weighted_prices.json", "dollars_per_bitcoin", extractUSDFromJson, 60*60)
+  DataPoint("http://blockexplorer.com/q/hashestowin", "hashes_per_block", parseDouble, 60*59*3),
+  DataPoint("http://blockexplorer.com/q/avgtxnumber", "transactions_per_block", parseDouble, 60*58*3),
+  DataPoint("http://blockexplorer.com/q/interval", "seconds_per_block", parseDouble, 60*57*3),
+  DataPoint("http://bitcoincharts.com/t/weighted_prices.json", "dollars_per_bitcoin", extractUSDFromJson, 60*56)
 ]
 # "http://bitcoincharts.com/t/weighted_prices.json"
 
