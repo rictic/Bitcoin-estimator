@@ -318,11 +318,13 @@
         var label = $("<label>", {for: name, text: description + ":"})
           .click(function(){
             displayValue.hide();
-            inputField.show().focus()});
+            inputField.show().focus()})
+            .mouseover(function(){highlight(name)})
+            .mouseout(function(){removeHighlight(name)});
         var inputField = $("<input>", {id: name, type: "text", "class": "prettyInput invisible"})
-          .focus(function(){highlight(this.id)})
+          .focus(function(){highlight(name)})
           .blur(function() {
-            removeHighlight(this.id);
+            removeHighlight(name);
             displayValue.show();
             inputField.hide();
           })
@@ -331,7 +333,9 @@
           function() {
             displayValue.hide();
             inputField.show().focus();
-          }).append("&nbsp;");
+          }).append("&nbsp;")
+          .mouseover(function(){highlight(name)})
+          .mouseout(function(){removeHighlight(name)});
         function updateDisplayField(val) {
           displayValue.text(numberStyle.renderNumber(val));;
         }
