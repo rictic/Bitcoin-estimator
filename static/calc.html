@@ -300,15 +300,23 @@
             .append(" ")
             .append(expressionToHtml(expression.rhs));
       }
+      function getItemsForHighlight(variableName) {
+        return [".prettyField" + variableName + " .styledVariable",
+          ".variable" + variableName,
+          "#" + variableName
+        ]
+      }
       function highlight(variableName) {
-        $(".styledVariable" + variableName).addClass("highlighted");
-        $(".variable" + variableName).addClass("highlighted");
-        $("#" + variableName).addClass("highlighted");
+        var h = getItemsForHighlight(variableName);
+        for (var i = 0; i < h.length; i++) {
+          $(h[i]).addClass('highlighted');
+        }
       }
       function removeHighlight(variableName) {
-        $(".styledVariable" + variableName).removeClass("highlighted");
-        $(".variable" + variableName).removeClass("highlighted");
-        $("#" + variableName).removeClass("highlighted");
+        var h = getItemsForHighlight(variableName);
+        for (var i = 0; i < h.length; i++) {
+          $(h[i]).removeClass('highlighted');
+        }
       }
       function NumberStyle(round, add_separators, prefix, suffix, preprocessor) {
         this.round = round === undefined ? false : round;
