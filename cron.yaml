@@ -1,0 +1,4 @@
+cron:
+- description: update caches
+  url: /fetchdata
+  schedule: every 15 minutes

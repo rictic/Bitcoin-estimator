@@ -6,6 +6,9 @@ api_version: 1
 handlers:
 - url: /getdata
   script: get_data.py
+- url: /fetchdata
+  script: fetchdata.py
+  login: admin
 - url: /(.*)
   static_files: static/\1
   upload: static/.*
