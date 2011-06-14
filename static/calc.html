@@ -31,6 +31,8 @@
 
       <div class='attack'></div>
         
+      <h3>For fun</h3>
+      <div class='fun'></div> 
       
       <h4>Preview:</h4>
       <div class='newFieldPreview'>
@@ -52,6 +54,7 @@
         "seconds_per_day = 60 * 60 * 24",
         "seconds_per_hour = 60 * 60",
         "seconds_per_month = seconds_per_day * 30",
+        "seconds_per_year = seconds_per_day * 365",
         "dollars_per_joule = dollars_per_kwh / 3,600,000",
         "cost_per_hash = dollars_per_joule / average_hashes_per_joule",
         "total_hashes_per_second = hashes_per_block / seconds_per_block",
@@ -80,26 +83,41 @@
         "rig_cost_of_attack = rigs_needed * cost_of_mining_rig",
         "zombie_cost_of_attack = zombies_needed * cost_of_a_botnet_zombie",
         "blocks_per_day = seconds_per_day / seconds_per_block",
-        "transactions_per_day = transactions_per_block * blocks_per_day"
+        "transactions_per_day = transactions_per_block * blocks_per_day",
+        "hashes_per_minute_by_hand = 1 / minutes_to_hash_by_hand",
+        "hashes_per_second_by_hand = hashes_per_minute_by_hand / 60",
+        "hashes_per_year_by_hand = hashes_per_second_by_hand * seconds_per_year",
+        "years_to_block_by_hand = hashes_per_block / hashes_per_year_by_hand"
       ]
       
-      var metricPrefix = function(divisor) {
+      var metricFormatter = function(divisor) {
         return function(v) {
           return v / divisor;
         }
       }
+      var metricMultipliers = {
+        T: 1000 * 1000 * 1000 * 1000,
+        G: 1000 * 1000 * 1000,
+        M: 1000 * 1000,
+        K: 1000,
+        "": 1,
+        c: 1.0 / 100,
+        m: 1.0 / 1000,
+        "μ": 1.0 / (1000 * 1000),
+        n: 1.0 / (1000 * 1000 * 1000)
+      }
+      
       var formatters = {
-        metric: {
-          K: metricPrefix(1000),
-          M: metricPrefix(1000 * 1000),
-          G: metricPrefix(1000 * 1000 * 1000),
-          T: metricPrefix(1000 * 1000 * 1000 * 1000)
-        },
+        metric: {},
         percent: function(num) {
           num *= 100;
           return num;
         }
       };
+      
+      for (var suffix in metricMultipliers) {
+        formatters.metric[suffix] = metricFormatter(metricMultipliers[suffix]);
+      }
       
       var displays = {"basics": [
         inputDisplay("hashes_per_block", "Expected Hashes Per Block", new NumberStyle(true, true, "", " T hashes", formatters.metric.T)),
@@ -109,10 +127,10 @@
         inputDisplay("dollars_per_bitcoin", "Dollars Per Bitcoin", new NumberStyle(false, true, "$", "")),
         inputDisplay("transactions_per_day", "Transactions Per Day", new NumberStyle(true, true, "", "")),
         inputDisplay("bitcoins_transacted_per_day", "Bitcoins Transacted Per Day", new NumberStyle(true, true, "", " BTC")),
-        inputDisplay("total_transaction_fees_per_day", "Average transaction fees per day", new NumberStyle(true, true, "", " BTC")),
+//         inputDisplay("total_transaction_fees_per_day", "Average transaction fees per day", new NumberStyle(true, true, "", " BTC")),
         inputDisplay("electricity_cost_of_network", "Daily Electricity Cost of Network", new NumberStyle(true, true, "$", "")),
         inputDisplay("electricity_cost_as_percentage_of_transactions", "Ratio of Electricity Cost to Transaction Value", new NumberStyle(3, true, "", " %", formatters.percent)),
-        inputDisplay("average_transaction_fee", "Observed Average Transaction Fee", new NumberStyle(3, true, "", " %", formatters.percent)),
+//         inputDisplay("average_transaction_fee", "Observed Average Transaction Fee", new NumberStyle(3, true, "", " %", formatters.percent)),
         inputDisplay("expected_transaction_fee", "Expected Transaction Fee If No New Coins Were Generated", new NumberStyle(2, true, "", " %", formatters.percent))
       ], "rigInfo": [
         inputDisplay("hashes_per_second", "Hashes Per Second", new NumberStyle(true, true, "", " M hashes per second", formatters.metric.M)),
@@ -131,19 +149,22 @@
         inputDisplay("zombies_needed", "Zombies needed for 51% attack", new NumberStyle(true, true, "", " zombies")),
         inputDisplay("rig_cost_of_attack", "Cost of 51% in rigs", new NumberStyle(true, true, "$", "")),
         inputDisplay("zombie_cost_of_attack", "Cost of 51% in zombies", new NumberStyle(true, true, "$", ""))
+      ], "fun": [
+        inputDisplay("minutes_to_hash_by_hand", "Minutes to perform a hash by hand", new NumberStyle(true, true, "", " minutes")),
+        inputDisplay("years_to_block_by_hand", "Time to solve a block by hand", new NumberStyle(1, true, "", " billion years", formatters.metric.G))
       ]}
       
 
       var network;
       var knownValues = {
         seconds_per_block: 60 * 10,
-        hashes_per_block: 1867811188859202,
+        hashes_per_block: 2436441257208094,
         number_of_blocks: 128706,
         transactions_per_block: 38.814,
-        dollars_per_bitcoin: 17,
+        dollars_per_bitcoin: 22,
         bitcoins_transacted_per_day: 479392.60,
         average_hashes_per_joule: 1000 * 1000,
-        total_transaction_fees_per_day: 20,
+        total_transaction_fees_per_day: 20, //out of date I think, don't have a good source for this data
         bitcoins_per_block: 50,
         dollars_per_kwh: 0.107,
         hashes_per_second: 708 * 1000 * 1000,
@@ -152,7 +173,8 @@
         hashes_per_second_per_rig: 900 * 1000 * 1000,
         cost_of_a_botnet_zombie: 5,
         hashes_per_second_per_botnet_zombie: 100 * 1000,
-        watts_used: 160
+        watts_used: 160,
+        minutes_to_hash_by_hand: 5
       };
       $(function() {
         var i = 0;
@@ -176,15 +198,23 @@
           $("<li>").append(equationToHtml(equations[i])).appendTo(".equationDisplay ul");
         }
         network = ConstraintNetwork.fromEquations(equations);
+        handleKnownValues();
         $.getJSON('getdata', function(response) {
           for (var key in response) {
             knownValues[key] = response[key];
-            $("#" + key).val(response[key]).addClass("fetchedExternalValue")
+            $(".prettyField" + key).addClass("upToDateValue")
+            handleKnownValues();
           }
           calculate();
         })
         calculate();
       });
+      function handleKnownValues() {
+        for (var key in knownValues) {
+          $("#" + key).val(knownValues[key]);
+          $(".prettyField" + key).addClass("knownValue")          
+        }
+      }
       
       var previousName;
       var previousValue;
@@ -223,8 +253,23 @@
       }
 //       console.log(Expr(ps("1+2*3-4")))
       
-      function parseValue(val) {
-        return parseFloat(val.replace(/,/g, ""), 10);
+      function parseValue(originalVal) {
+        val = originalVal.replace(/,/g, "");
+        var suffixes = [];
+        for (var suffix in metricMultipliers) {
+          suffixes.push(suffix);
+        }
+        var r = new RegExp("(\\d+(\\.\\d+)?)\\s*(" + suffixes.join("|") + ")");
+        var match = val.match(r);
+        if (match) {
+          var base = parseFloat(match[1], 10);
+          return base * metricMultipliers[match[3]];
+        } else {
+          if (originalVal != "") {
+            console.warn("Unable to parse number " + val + " with regexp " + r);
+          }
+          return NaN;
+        }
       }
       
       function equationToHtml(equation) {
@@ -329,7 +374,7 @@
             inputField.hide();
           })
           .change(calculate).keyup(calculate);
-        var displayValue = $("<span>", {"class": "styledVariable" + name}).click(
+        var displayValue = $("<span>", {"class": "styledVariable"}).click(
           function() {
             displayValue.hide();
             inputField.show().focus();
@@ -345,7 +390,7 @@
             inputField.attr("placeholder", mappings[name]);
           }
         })
-        return $("<div>", {"class": "clear prettyField"}).append(label, inputField, displayValue);
+        return $("<div>", {"class": "clear prettyField prettyField" + name}).append(label, inputField, displayValue);
       }
     </script>
     
