@@ -22,6 +22,7 @@
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+/** @type {function(function(*, *):*, *, [*])} **/
 function foldl(f, initial, seq) {
     for(var i=0; i< seq.length; ++i)
         initial = f(initial, seq[i]);
@@ -42,6 +43,7 @@ function ParseState(input, index) {
     return this;
 }
 
+/** @type {function(number=):ParseState} **/
 ParseState.prototype.from = function(index) {
     var r = new ParseState(this.input, this.index + index);
     r.cache = this.cache;
@@ -54,12 +56,14 @@ ParseState.prototype.substring = function(start, end) {
     return this.input.substring(start + this.index, (end || this.length) + this.index);
 }
 
+/** @type {function():ParseState} **/
 ParseState.prototype.trimLeft = function() {
     var s = this.substring(0);
     var m = s.match(/^\s+/);
     return m ? this.from(m[0].length) : this;
 }
 
+/** @type {function(number):string} **/
 ParseState.prototype.at = function(index) {
     return this.input.charAt(this.index + index);
 }
@@ -92,6 +96,15 @@ ParseState.prototype.putCached = function(pid, cached) {
     }
 }
 
+/** @typedef {{remaining: !ParseState, matched: (string, undefined), ast: *}} **/
+ParseState.GoodResult;
+/** @typedef {(ParseState.GoodResult, boolean)} **/
+ParseState.Result;
+/** @typedef {function(!ParseState):ParseState.Result} **/
+ParseState.Parser;
+/** @typedef {(string, ParseState.Parser)} **/
+ParseState.P;
+
 function ps(str) {
     return new ParseState(str);
 }
@@ -100,6 +113,7 @@ function ps(str) {
 // 'matched' is the portion of the string that
 // was successfully matched by the parser.
 // 'ast' is the AST returned by the successfull parse.
+/** @type {function(!ParseState, string=, *=):ParseState.GoodResult} */
 function make_result(r, matched, ast) {
         return { remaining: r, matched: matched, ast: ast };
 }
@@ -108,6 +122,7 @@ var parser_id = 0;
 
 // 'token' is a parser combinator that given a string, returns a parser
 // that parses that string value. The AST contains the string that was parsed.
+/** @type {function(string):ParseState.Parser} **/
 function token(s) {
     var pid = parser_id++;
     return function(state) {
@@ -128,6 +143,7 @@ function token(s) {
 
 // Like 'token' but for a single character. Returns a parser that given a string
 // containing a single character, parses that character value.
+/** @type {function(string):ParseState.Parser} **/
 function ch(c) {
     var pid = parser_id++;
     return function(state) {
@@ -148,6 +164,7 @@ function ch(c) {
 // 'range' is a parser combinator that returns a single character parser
 // (similar to 'ch'). It parses single characters that are in the inclusive
 // range of the 'lower' and 'upper' bounds ("a" to "z" for example).
+/** @type {function(string, string):ParseState.Parser} **/
 function range(lower, upper) {
     var pid = parser_id++;
     return function(state) {
@@ -172,14 +189,16 @@ function range(lower, upper) {
 
 // Helper function to convert string literals to token parsers
 // and perform other implicit parser conversions.
+/** @type {function(ParseState.P):ParseState.Parser} **/
 function toParser(p) {
     return (typeof(p) == "string") ? token(p) : p;
 }
 
 // Parser combinator that returns a parser that
 // skips whitespace before applying parser.
-function whitespace(p) {
-    p = toParser(p);
+/** @type {function(ParseState.P):ParseState.Parser} **/
+function whitespace(p_in) {
+    var p = toParser(p_in);
     var pid = parser_id++;
     return function(state) {
         var savedState = state;
@@ -195,8 +214,9 @@ function whitespace(p) {
 
 // Parser combinator that passes the AST generated from the parser 'p'
 // to the function 'f'. The result of 'f' is used as the AST in the result.
-function action(p, f) {
-    p = toParser(p);
+/** @type {function(ParseState.P, function(*):*):ParseState.Parser} **/
+function action(p_in, f) {
+    var p = toParser(p_in);
     var pid = parser_id++;
     return function(state) {
         var savedState = state;
@@ -219,6 +239,7 @@ function action(p, f) {
 
 // Given a parser that produces an array as an ast, returns a
 // parser that produces an ast with the array joined by a separator.
+/** @type {function(ParseState.P, string):ParseState.Parser} **/
 function join_action(p, sep) {
     return action(p, function(ast) { return ast.join(sep); });
 }
@@ -242,6 +263,7 @@ function left_factor(ast) {
 
 // Return a parser that left factors the ast result of the original
 // parser.
+/** @type {function(ParseState.P):ParseState.Parser} **/
 function left_factor_action(p) {
     return action(p, left_factor);
 }
@@ -249,8 +271,9 @@ function left_factor_action(p) {
 // 'negate' will negate a single character parser. So given 'ch("a")' it will successfully
 // parse any character except for 'a'. Or 'negate(range("a", "z"))' will successfully parse
 // anything except the lowercase characters a-z.
-function negate(p) {
-    p = toParser(p);
+/** @type {function(ParseState.P):ParseState.Parser} **/
+function negate(p_in) {
+    var p = toParser(p_in);
     var pid = parser_id++;
     return function(state) {
         var savedState = state;
@@ -274,6 +297,7 @@ function negate(p) {
 }
 
 // 'end_p' is a parser that is successful if the input string is empty (ie. end of parse).
+/** @type {ParseState.Parser} **/
 function end_p(state) {
     if(state.length == 0)
         return make_result(state, undefined, undefined);
@@ -282,6 +306,7 @@ function end_p(state) {
 }
 
 // 'nothing_p' is a parser that always fails.
+/** @type {ParseState.Parser} **/
 function nothing_p(state) {
     return false;
 }
@@ -289,7 +314,7 @@ function nothing_p(state) {
 // 'sequence' is a parser combinator that processes a number of parsers in sequence.
 // It can take any number of arguments, each one being a parser. The parser that 'sequence'
 // returns succeeds if all the parsers in the sequence succeeds. It fails if any of them fail.
-/** @type {function(...):*} **/
+/** @type {function(...[ParseState.P]):ParseState.Parser} **/
 function sequence(var_args) {
     var parsers = [];
     for(var i = 0; i < arguments.length; ++i)
@@ -330,7 +355,7 @@ function sequence(var_args) {
 }
 
 // Like sequence, but ignores whitespace between individual parsers.
-/** @type {function(...):*} **/
+/** @type {function(...[ParseState.P]):ParseState.Parser} **/
 function wsequence(var_args) {
     var parsers = [];
     for(var i=0; i < arguments.length; ++i) {
@@ -343,7 +368,7 @@ function wsequence(var_args) {
 // It takes any number of parsers as arguments and returns a parser that will try
 // each of the given parsers in order. The first one that succeeds results in a
 // successfull parse. It fails if all parsers fail.
-/** @type {function(...):*} **/
+/** @type {function(...[ParseState.P]):ParseState.Parser} **/
 function choice(var_args) {
     var parsers = [];
     for(var i = 0; i < arguments.length; ++i)
@@ -376,9 +401,10 @@ function choice(var_args) {
 // It returns a parser that succeeds if 'p1' matches and 'p2' does not, or
 // 'p1' matches and the matched text is longer that p2's.
 // Useful for things like: butnot(IdentifierName, ReservedWord)
-function butnot(p1,p2) {
-    p1 = toParser(p1);
-    p2 = toParser(p2);
+/** @type {function(ParseState.P, ParseState.P):ParseState.Parser} **/
+function butnot(p1_in,p2_in) {
+    var p1 = toParser(p1_in);
+    var p2 = toParser(p2_in);
     var pid = parser_id++;
 
     // match a but not b. if both match and b's matched text is shorter
@@ -413,9 +439,10 @@ function butnot(p1,p2) {
 // 'difference' is a parser combinator that takes two parsers, 'p1' and 'p2'.
 // It returns a parser that succeeds if 'p1' matches and 'p2' does not. If
 // both match then if p2's matched text is shorter than p1's it is successfull.
-function difference(p1,p2) {
-    p1 = toParser(p1);
-    p2 = toParser(p2);
+/** @type {function(ParseState.P, ParseState.P):ParseState.Parser} **/
+function difference(p1_in,p2_in) {
+    var p1 = toParser(p1_in);
+    var p2 = toParser(p2_in);
     var pid = parser_id++;
 
     // match a but not b. if both match and b's matched text is shorter
@@ -445,9 +472,10 @@ function difference(p1,p2) {
 // 'xor' is a parser combinator that takes two parsers, 'p1' and 'p2'.
 // It returns a parser that succeeds if 'p1' or 'p2' match but fails if
 // they both match.
-function xor(p1, p2) {
-    p1 = toParser(p1);
-    p2 = toParser(p2);
+/** @type {function(ParseState.P, ParseState.P):ParseState.Parser} **/
+function xor(p1_in, p2_in) {
+    var p1 = toParser(p1_in);
+    var p2 = toParser(p2_in);
     var pid = parser_id++;
 
     // match a or b but not both
@@ -470,8 +498,9 @@ function xor(p1, p2) {
 
 // A parser combinator that takes one parser. It returns a parser that
 // looks for zero or more matches of the original parser.
-function repeat0(p) {
-    p = toParser(p);
+/** @type {function(ParseState.P):ParseState.Parser} **/
+function repeat0(p_in) {
+    var p = toParser(p_in);
     var pid = parser_id++;
 
     return function(state) {
@@ -499,8 +528,9 @@ function repeat0(p) {
 
 // A parser combinator that takes one parser. It returns a parser that
 // looks for one or more matches of the original parser.
-function repeat1(p) {
-    p = toParser(p);
+/** @type {function(ParseState.P):ParseState.Parser} **/
+function repeat1(p_in) {
+    var p = toParser(p_in);
     var pid = parser_id++;
 
     return function(state) {
@@ -532,8 +562,9 @@ function repeat1(p) {
 
 // A parser combinator that takes one parser. It returns a parser that
 // matches zero or one matches of the original parser.
-function optional(p) {
-    p = toParser(p);
+/** @type {function(ParseState.P):ParseState.Parser} **/
+function optional(p_in) {
+    var p = toParser(p_in);
     var pid = parser_id++;
     return function(state) {
         var savedState = state;
@@ -551,6 +582,7 @@ function optional(p) {
 // ignores its result. This can be useful for parsing literals that you
 // don't want to appear in the ast. eg:
 // sequence(expect("("), Number, expect(")")) => ast: Number
+/** @type {function(ParseState.Parser):ParseState.Parser} **/
 function expect(p) {
     return action(p, function(ast) { return undefined; });
 }
@@ -567,6 +599,7 @@ function chain(p, s, f) {
 // of the form: function(lhs,rhs) { return x; }
 // Where 'x' is the result of applying some operation to the lhs and rhs AST's from the item
 // parser.
+
 function chainl(p, s) {
     p = toParser(p);
     return action(sequence(p, repeat0(sequence(s, p))),
@@ -592,6 +625,7 @@ function wlist() {
 }
 
 // A parser that always returns a zero length match
+/** @type {ParseState.Parser} **/
 function epsilon_p(state) {
     return make_result(state, "", undefined);
 }
@@ -599,6 +633,7 @@ function epsilon_p(state) {
 // Allows attaching of a function anywhere in the grammer. If the function returns
 // true then parse succeeds otherwise it fails. Can be used for testing if a symbol
 // is in the symbol table, etc.
+/** @type {function(function():*):ParseState.Parser} **/
 function semantic(f) {
     var pid = parser_id++;
     return function(state) {
@@ -619,6 +654,7 @@ function semantic(f) {
 // It succeeds if 'p' succeeds and fails if 'p' fails. It never
 // consume any input however, and doesn't put anything in the resulting
 // AST.
+/** @type {function(ParseState.Parser):ParseState.Parser} **/
 function and(p) {
     p = toParser(p);
     var pid = parser_id++;
@@ -648,6 +684,7 @@ function and(p) {
 //    parses a+b
 //    parses a++b
 //
+/** @type {function(ParseState.Parser):ParseState.Parser} **/
 function not(p) {
     p = toParser(p);
     var pid = parser_id++;

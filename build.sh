@@ -1,1 +1,1 @@
-java -jar tools/compiler.jar --externs=tools/externs.js --js=static/numberStyle.js --js=static/jsparse.js --js=static/units.js --js=static/units_test.js --warning_level=VERBOSE >/dev/null
+java -jar tools/compiler.jar --externs=tools/externs.js --js=static/numberStyle.js --js=static/jsparse.js --js=static/units.js --js=static/units_test.js --warning_level=VERBOSE --summary_detail_level=3 >/dev/null
