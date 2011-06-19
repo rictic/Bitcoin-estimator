@@ -98,7 +98,7 @@ ParseState.prototype.putCached = function(pid, cached) {
 
 /** @typedef {{remaining: !ParseState, matched: (string, undefined), ast: *}} **/
 ParseState.GoodResult;
-/** @typedef {(ParseState.GoodResult, boolean)} **/
+/** @typedef {!(ParseState.GoodResult, boolean)} **/
 ParseState.Result;
 /** @typedef {function(!ParseState):ParseState.Result} **/
 ParseState.Parser;
