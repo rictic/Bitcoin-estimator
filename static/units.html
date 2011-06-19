@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <title>Units!</title>
+    <style type="text/css" media="screen">
+      body {
+        font-size: 150%;
+      }
+      h1 {
+        text-align: center;
+      }
+      .main {
+        margin: auto;
+        position: absolute;
+        width: 60%;
+        height: 60%;
+        top:0; bottom:0; left:0; right:0;
+      }
+      input {
+        margin-left: auto;
+        margin-right: auto;
+        width: 100%;
+        font-size: 150%;
+      }
+
+      .output .field {
+        text-align: center;
+      }
+      .error {
+        color: #a33;
+      }
+
+    </style>
+  </head>
+  <body>
+
+    <div class='main'>
+      <h1>Units!</h1>
+      <input type="text" name="input" value="" placeholder="30 m * 15 seconds" autofocus id="input">
+      
+      <br><br><br><br>
+      <div class='output'>
+        <div class='field result'></div>
+        <div class='field expressionError error'></div>
+        <div class='field testError error'></div>
+      </div>
+    </div>
+    <script src="jquery.js" charset="utf-8"></script>
+    <script src="jsparse.js" charset="utf-8"></script>
+    <script src="units.js" charset="utf-8"></script>
+    <script src="units_test.js" charset="utf-8"></script>
+    <script src="numberStyle.js" charset="utf-8"></script>
+    <script type="text/javascript">
+      $(function() {
+        $('#input').keyup(evaluate);
+//         try {
+          runUnitsTests()
+//         } catch(e) {
+//           error("Test failed: " + e.message, "test");
+//         }
+      });
+      var style = new NumberStyle(6, true);
+      function evaluate() {
+        clearAll();
+        var input = $('#input').val();
+        if (input === "") {
+          return;
+        }
+        try {
+          var expression = units.parseExpression(input);
+          var quantity = expression.evaluate();
+        } catch(e) {
+          error(e);
+          return;
+        }
+        $(".result").text(style.renderNumber(quantity.standardValue) + " " + quantity.unit.toFullString());
+      }
+      
+      function error(e, t) {
+        $("." + (t || "expression") + "Error").text(e.message || e);
+      }
+      function clearAll() {
+        $(".expressionError").empty();
+        $(".result").empty();
+      }
+    </script>
+  </body>
+</html>

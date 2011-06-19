@@ -13,3 +13,5 @@ handlers:
   static_files: static/\1
   upload: static/.*
 
+builtins:
+- datastore_admin: on
