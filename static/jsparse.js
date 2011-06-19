@@ -30,6 +30,10 @@ function foldl(f, initial, seq) {
 
 var memoize = true;
 
+/** @constructor 
+ *  @param {string} input the text to parse
+ *  @param {number=} index the initial index to begin parsing from
+ **/
 function ParseState(input, index) {
     this.input = input;
     this.index = index || 0;
@@ -45,6 +49,7 @@ ParseState.prototype.from = function(index) {
     return r;
 }
 
+/** @type {function(number, number=):string} **/
 ParseState.prototype.substring = function(start, end) {
     return this.input.substring(start + this.index, (end || this.length) + this.index);
 }
@@ -174,7 +179,7 @@ function toParser(p) {
 // Parser combinator that returns a parser that
 // skips whitespace before applying parser.
 function whitespace(p) {
-    var p = toParser(p);
+    p = toParser(p);
     var pid = parser_id++;
     return function(state) {
         var savedState = state;
@@ -191,7 +196,7 @@ function whitespace(p) {
 // Parser combinator that passes the AST generated from the parser 'p'
 // to the function 'f'. The result of 'f' is used as the AST in the result.
 function action(p, f) {
-    var p = toParser(p);
+    p = toParser(p);
     var pid = parser_id++;
     return function(state) {
         var savedState = state;
@@ -245,7 +250,7 @@ function left_factor_action(p) {
 // parse any character except for 'a'. Or 'negate(range("a", "z"))' will successfully parse
 // anything except the lowercase characters a-z.
 function negate(p) {
-    var p = toParser(p);
+    p = toParser(p);
     var pid = parser_id++;
     return function(state) {
         var savedState = state;
@@ -284,7 +289,8 @@ function nothing_p(state) {
 // 'sequence' is a parser combinator that processes a number of parsers in sequence.
 // It can take any number of arguments, each one being a parser. The parser that 'sequence'
 // returns succeeds if all the parsers in the sequence succeeds. It fails if any of them fail.
-function sequence() {
+/** @type {function(...):*} **/
+function sequence(var_args) {
     var parsers = [];
     for(var i = 0; i < arguments.length; ++i)
         parsers.push(toParser(arguments[i]));
@@ -324,7 +330,8 @@ function sequence() {
 }
 
 // Like sequence, but ignores whitespace between individual parsers.
-function wsequence() {
+/** @type {function(...):*} **/
+function wsequence(var_args) {
     var parsers = [];
     for(var i=0; i < arguments.length; ++i) {
         parsers.push(whitespace(toParser(arguments[i])));
@@ -336,7 +343,8 @@ function wsequence() {
 // It takes any number of parsers as arguments and returns a parser that will try
 // each of the given parsers in order. The first one that succeeds results in a
 // successfull parse. It fails if all parsers fail.
-function choice() {
+/** @type {function(...):*} **/
+function choice(var_args) {
     var parsers = [];
     for(var i = 0; i < arguments.length; ++i)
         parsers.push(toParser(arguments[i]));
@@ -369,8 +377,8 @@ function choice() {
 // 'p1' matches and the matched text is longer that p2's.
 // Useful for things like: butnot(IdentifierName, ReservedWord)
 function butnot(p1,p2) {
-    var p1 = toParser(p1);
-    var p2 = toParser(p2);
+    p1 = toParser(p1);
+    p2 = toParser(p2);
     var pid = parser_id++;
 
     // match a but not b. if both match and b's matched text is shorter
@@ -406,8 +414,8 @@ function butnot(p1,p2) {
 // It returns a parser that succeeds if 'p1' matches and 'p2' does not. If
 // both match then if p2's matched text is shorter than p1's it is successfull.
 function difference(p1,p2) {
-    var p1 = toParser(p1);
-    var p2 = toParser(p2);
+    p1 = toParser(p1);
+    p2 = toParser(p2);
     var pid = parser_id++;
 
     // match a but not b. if both match and b's matched text is shorter
@@ -438,8 +446,8 @@ function difference(p1,p2) {
 // It returns a parser that succeeds if 'p1' or 'p2' match but fails if
 // they both match.
 function xor(p1, p2) {
-    var p1 = toParser(p1);
-    var p2 = toParser(p2);
+    p1 = toParser(p1);
+    p2 = toParser(p2);
     var pid = parser_id++;
 
     // match a or b but not both
@@ -463,7 +471,7 @@ function xor(p1, p2) {
 // A parser combinator that takes one parser. It returns a parser that
 // looks for zero or more matches of the original parser.
 function repeat0(p) {
-    var p = toParser(p);
+    p = toParser(p);
     var pid = parser_id++;
 
     return function(state) {
@@ -492,7 +500,7 @@ function repeat0(p) {
 // A parser combinator that takes one parser. It returns a parser that
 // looks for one or more matches of the original parser.
 function repeat1(p) {
-    var p = toParser(p);
+    p = toParser(p);
     var pid = parser_id++;
 
     return function(state) {
@@ -525,7 +533,7 @@ function repeat1(p) {
 // A parser combinator that takes one parser. It returns a parser that
 // matches zero or one matches of the original parser.
 function optional(p) {
-    var p = toParser(p);
+    p = toParser(p);
     var pid = parser_id++;
     return function(state) {
         var savedState = state;
@@ -548,7 +556,7 @@ function expect(p) {
 }
 
 function chain(p, s, f) {
-    var p = toParser(p);
+    p = toParser(p);
 
     return action(sequence(p, repeat0(action(sequence(s, p), f))),
                   function(ast) { return [ast[0]].concat(ast[1]); });
@@ -560,7 +568,7 @@ function chain(p, s, f) {
 // Where 'x' is the result of applying some operation to the lhs and rhs AST's from the item
 // parser.
 function chainl(p, s) {
-    var p = toParser(p);
+    p = toParser(p);
     return action(sequence(p, repeat0(sequence(s, p))),
                   function(ast) {
                       return foldl(function(v, action) { return action[0](v, action[1]); }, ast[0], ast[1]);
@@ -612,7 +620,7 @@ function semantic(f) {
 // consume any input however, and doesn't put anything in the resulting
 // AST.
 function and(p) {
-    var p = toParser(p);
+    p = toParser(p);
     var pid = parser_id++;
     return function(state) {
         var savedState = state;
@@ -641,7 +649,7 @@ function and(p) {
 //    parses a++b
 //
 function not(p) {
-    var p = toParser(p);
+    p = toParser(p);
     var pid = parser_id++;
     return function(state) {
         var savedState = state;

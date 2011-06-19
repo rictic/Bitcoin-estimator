@@ -68,11 +68,14 @@ function runUnitsTests() {
   }
 }
 
+/** @type {function(*, *, string=)} **/
 function assertAboutEquals(a, b, msg) {
   if (!a.aboutEquals(b)) {
     throw new Error(a + " should be nearly equal " + b);
   }
 }
+
+/** @type {function(*, *, string=)} **/
 function assertNotEquals(a, b, msg) {
   if (a === b) {
     throw new Error(msg || a + " should not be equal to " + b)

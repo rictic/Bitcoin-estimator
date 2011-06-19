@@ -31,7 +31,7 @@ var units = (function() {
       if (ast[0]) {
         f = "-" + f;
       }
-      return new LiteralNode(Quantity.fromValueAndUnit(parseFloat(f, 10), ast[2]));
+      return new LiteralNode(Quantity.fromValueAndUnit(parseFloat(f), ast[2]));
 	  }
   );
   function Expr(state) {
@@ -49,7 +49,7 @@ var units = (function() {
 //     }
 //     
 //   });
-  var Expr = Sum;
+  Expr = Sum;
   
   
   var Expression = Expr;
@@ -71,9 +71,8 @@ var units = (function() {
   
   
   /* Expression AST nodes: */
-  function ValueNode() {
-    
-  }
+  /** @constructor **/
+  function ValueNode() {}
   ValueNode.prototype.multiply = function(o) {
     return this.evaluate().multiply(o.evaluate());
   }
@@ -87,8 +86,9 @@ var units = (function() {
     return this.evaluate().divide(o.evaluate());
   }
   ValueNode.prototype.toString = function() {
-    "<VN " + JSON.stringify(this) + ">"; 
+    return "<VN " + JSON.stringify(this) + ">"; 
   }
+  /** @constructor **/
   function LiteralNode(value) {
     this.value = value;
   }
@@ -100,6 +100,7 @@ var units = (function() {
     return "<L " + this.value + " >"
   }
   
+  /** @constructor **/
   function ExpressionNode(lhs, rhs, operator) {
     this.lhs = lhs;
     this.rhs = rhs;
@@ -146,6 +147,7 @@ var units = (function() {
     }
   }
   
+  /** @constructor **/
   function Quantity(standardValue, convertedValue, unit) {
     this.convertedValue = convertedValue;
     this.standardValue = standardValue;
@@ -196,6 +198,7 @@ var units = (function() {
     return this.standardValue + " " + this.unit;
   }
   
+  /** @constructor **/
   function BaseUnit() {}
   BaseUnit.prototype = {
     toStandard: function(v) {return v;},
@@ -204,7 +207,7 @@ var units = (function() {
       return new ComplexUnit(addAmounts(this.complexForm().unitAmounts, oUnit.complexForm().unitAmounts));
     },
     divide: function(oUnit) {
-      oAmounts = oUnit.complexForm().unitAmounts;
+      var oAmounts = oUnit.complexForm().unitAmounts;
       for (var i = 0; i < oAmounts.length; i++) {
         oAmounts[i][0] = -oAmounts[i][0];
       }
@@ -271,6 +274,7 @@ var units = (function() {
   EmptyUnit.complexForm = function() {return new ComplexUnit([])};
   EmptyUnit.baseUnit = EmptyUnit;
   
+  /** @constructor **/
   function SimpleUnit() {}
   SimpleUnit.prototype = new BaseUnit();
   SimpleUnit.prototype.matches = function(s) {
@@ -281,6 +285,7 @@ var units = (function() {
   }
   SimpleUnit.prototype.complexForm = function() {return new ComplexUnit([[1, this.baseUnit]])}
   
+  /** @constructor **/
   function ComplexUnit(unitAmounts) {
     this.unitAmounts = unitAmounts;
   }

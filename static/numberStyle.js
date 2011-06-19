@@ -1,3 +1,4 @@
+/** @constructor **/
 function NumberStyle(round, add_separators, prefix, suffix, preprocessor) {
   this.round = round === undefined ? false : round;
   this.add_separators = add_separators === undefined ? true : add_separators;
