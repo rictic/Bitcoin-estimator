@@ -283,7 +283,12 @@ var units = (function() {
   SimpleUnit.prototype.toJSON = function() {
     return "<" + this.fullName + ">";
   }
-  SimpleUnit.prototype.complexForm = function() {return new ComplexUnit([[1, this.baseUnit]])}
+  SimpleUnit.prototype.complexForm = function() {
+    if (this.baseUnit.unitAmounts) {
+      return this.baseUnit;
+    }
+    return new ComplexUnit([[1, this.baseUnit]]);
+  }
   
   /** @constructor **/
   function ComplexUnit(unitAmounts) {
@@ -406,7 +411,7 @@ var units = (function() {
     var unit = new SimpleUnit();
     unit.toStandard = factors.toStandard;
     unit.fromStandard = factors.fromStandard;
-    unit.baseUnit = q.unit.baseUnit;
+    unit.baseUnit = q.unit.baseUnit || q.unit;
     unit.shortName = asu[1];
     unit.fullName = asu[2] || unit.shortName;
     unit.unitMatcher = RegExp("^\\s*(" + asu.slice(1).join("|")  + ")\\s*$")

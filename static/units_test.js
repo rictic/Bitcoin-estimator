@@ -22,8 +22,9 @@ var goodEvaluations = [
   ["1Hz", "1 / 1s"]
 ];
 
-var desiredOutput = [
-  
+var displayTests = [
+//   ["10MB", "10MB"],
+//   ["10,000,000 B", "10MB"],
 ]
 
 var shouldParse = [
@@ -66,12 +67,29 @@ function runUnitsTests() {
     }
     throw new Error("`" + badInput + "` should yield an error, got: " + val);
   }
+  
+  for (var i = 0; i < displayTests.length; i++) {
+    var expression = displayTests[i][0];
+    var expectedDisplay = displayTests[i][1];
+    
+    var val = units.parseExpression(expression).evaluate();
+    var display = val.toString();
+    
+    assertEquals(display, expectedDisplay);
+  }
 }
 
 /** @type {function(*, *, string=)} **/
 function assertAboutEquals(a, b, msg) {
   if (!a.aboutEquals(b)) {
     throw new Error(a + " should be nearly equal " + b);
+  }
+}
+
+/** @type {function(*, *, string=)} **/
+function assertEquals(a, b, msg) {
+  if ('equals' in Object(a) ? (!a.equals(b)) : (a !== b)) {
+    throw new Error(msg || a + " should be equal to " + b);
   }
 }
 
